@@ -4,7 +4,7 @@
 
 **Project Title**: Retail Sales Analysis  
 **Level**: Beginner  
-**Database**: `p1_retail_db`
+**Database**: `sql_project_p2`
 
 This project is designed to demonstrate SQL skills and techniques typically used by data analysts to explore, clean, and analyze retail sales data. The project involves setting up a retail sales database, performing exploratory data analysis (EDA), and answering specific business questions through SQL queries. This project is ideal for those who are starting their journey in data analysis and want to build a solid foundation in SQL.
 
@@ -19,11 +19,11 @@ This project is designed to demonstrate SQL skills and techniques typically used
 
 ### 1. Database Setup
 
-- **Database Creation**: The project starts by creating a database named `p1_retail_db`.
+- **Database Creation**: The project starts by creating a database named `sql_project_p2`.
 - **Table Creation**: A table named `retail_sales` is created to store the sales data. The table structure includes columns for transaction ID, sale date, sale time, customer ID, gender, age, product category, quantity sold, price per unit, cost of goods sold (COGS), and total sale amount.
 
 ```sql
-CREATE DATABASE p1_retail_db;
+CREATE DATABASE sql_project_p2;
 
 CREATE TABLE retail_sales
 (
@@ -85,7 +85,7 @@ FROM retail_sales
 WHERE 
     category = 'Clothing'
     AND 
-    TO_CHAR(sale_date, 'YYYY-MM') = '2022-11'
+    DATE_FORMAT(sale_date, '%Y-%m') = '2022-11'
     AND
     quantity >= 4
 ```
@@ -97,7 +97,7 @@ SELECT
     SUM(total_sale) as net_sale,
     COUNT(*) as total_orders
 FROM retail_sales
-GROUP BY 1
+GROUP BY category 
 ```
 
 4. **Write a SQL query to find the average age of customers who purchased items from the 'Beauty' category.**:
@@ -125,26 +125,25 @@ GROUP
     BY 
     category,
     gender
-ORDER BY 1
+ORDER BY category
 ```
 
 7. **Write a SQL query to calculate the average sale for each month. Find out best selling month in each year**:
 ```sql
 SELECT 
-       year,
-       month,
+	year,
+	month,
     avg_sale
 FROM 
-(    
-SELECT 
-    EXTRACT(YEAR FROM sale_date) as year,
-    EXTRACT(MONTH FROM sale_date) as month,
-    AVG(total_sale) as avg_sale,
-    RANK() OVER(PARTITION BY EXTRACT(YEAR FROM sale_date) ORDER BY AVG(total_sale) DESC) as rank
-FROM retail_sales
-GROUP BY 1, 2
-) as t1
-WHERE rank = 1
+(
+    SELECT 
+        YEAR(sale_date) AS year,
+        MONTH(sale_date) AS month,
+        AVG(total_sale) AS avg_sale,
+        RANK() OVER(PARTITION BY YEAR(sale_date) ORDER BY AVG(total_sale) DESC) AS ranking
+    FROM retail_sales
+    GROUP BY year, month
+) as average_sale
 ```
 
 8. **Write a SQL query to find the top 5 customers based on the highest total sales **:
@@ -153,8 +152,8 @@ SELECT
     customer_id,
     SUM(total_sale) as total_sales
 FROM retail_sales
-GROUP BY 1
-ORDER BY 2 DESC
+GROUP BY customer_id
+ORDER BY total_sales DESC
 LIMIT 5
 ```
 
@@ -169,22 +168,15 @@ GROUP BY category
 
 10. **Write a SQL query to create each shift and number of orders (Example Morning <12, Afternoon Between 12 & 17, Evening >17)**:
 ```sql
-WITH hourly_sale
-AS
-(
-SELECT *,
-    CASE
-        WHEN EXTRACT(HOUR FROM sale_time) < 12 THEN 'Morning'
-        WHEN EXTRACT(HOUR FROM sale_time) BETWEEN 12 AND 17 THEN 'Afternoon'
-        ELSE 'Evening'
-    END as shift
-FROM retail_sales
-)
 SELECT 
-    shift,
-    COUNT(*) as total_orders    
-FROM hourly_sale
-GROUP BY shift
+    CASE
+        WHEN HOUR (sale_time) < 12 THEN 'Morning'
+        WHEN HOUR (sale_time) BETWEEN 12 AND 17 THEN 'Afternoon'
+        ELSE 'Evening'
+    END as shift,
+COUNT(*) as total_orders
+FROM retail_sales
+group by shift;
 ```
 
 ## Findings
